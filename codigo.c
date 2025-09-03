@@ -17,15 +17,17 @@ int mostrarMenu();
 int adicionarNaFila(int *fila);
 int removerDaFila(int *fila);
 
-// MAIN
 int main(void) {
-
   // VARIÁVEIS
   float precoEtanol = 1, precoGasolina = 1, precoAditivada = 1;
   float qtdEtanol, qtdGasolina, qtdAditivada;
   float valorTotal, carrosAtendidos = 0, tamanhoFila = 1;
   float estoqueEtanol = 200, estoqueGasolina = 200, estoqueAditivada = 200;
-  int fila = 0, opcaoMenu, opcaoRelatorio, capacidadeMaxima, contadorCarros = 1;
+
+  // acumuladores para relatórios
+  float totalEtanolVendido = 0, totalGasolinaVendida = 0, totalAditivadaVendida = 0;
+
+  int fila = 0, opcaoMenu, opcaoRelatorio, capacidadeMaxima, contadorCarros = 0;
 
   printf("---------------------------------------------------------------------------------------------------------\n");
   printf("Bem-vindo ao sistema de abastecimento do posto de gasolina!\n");
@@ -49,15 +51,17 @@ int main(void) {
 
   } while (precoEtanol < 0 || precoGasolina < 0 || precoAditivada < 0 || tamanhoFila <= 0);
 
+  // agora sim, a capacidade da fila é definida
+  capacidadeMaxima = (int)tamanhoFila;
   struct Carro carros[capacidadeMaxima];
 
   do {
     opcaoMenu = mostrarMenu();
 
     switch (opcaoMenu) {
-      case 1:
+      case 1: // adicionar carro
         system("clear");
-        if (fila <= tamanhoFila) {
+        if (fila < capacidadeMaxima) {
           adicionarNaFila(&fila);
           limparBufferEntrada();
 
@@ -70,33 +74,34 @@ int main(void) {
           printf("\nDigite a placa do carro: ");
           fgets(carros[contadorCarros].placa, 30, stdin);
 
-          printf("\nModelo: %s\nCor: %s\nPlaca: %s",
+          printf("\nCarro adicionado:\nModelo: %sCor: %sPlaca: %s\n",
                  carros[contadorCarros].modelo,
                  carros[contadorCarros].cor,
                  carros[contadorCarros].placa);
 
           contadorCarros++;
-          printf("\nCarro adicionado na fila.\n");
-
         } else {
           printf("\nFila cheia!\n");
         }
       break;
 
-      case 2:
+      case 2: // abastecimento
         system("clear");
         if (fila > 0) {
           printf("\nDigite a quantidade vendida de Etanol: ");
           scanf("%f", &qtdEtanol);
           estoqueEtanol -= qtdEtanol;
+          totalEtanolVendido += qtdEtanol;
 
           printf("\nDigite a quantidade vendida de Gasolina Comum: ");
           scanf("%f", &qtdGasolina);
           estoqueGasolina -= qtdGasolina;
+          totalGasolinaVendida += qtdGasolina;
 
           printf("\nDigite a quantidade vendida de Gasolina Aditivada: ");
           scanf("%f", &qtdAditivada);
           estoqueAditivada -= qtdAditivada;
+          totalAditivadaVendida += qtdAditivada;
 
           carrosAtendidos++;
           printf("\nCarros atendidos: %.f\n", carrosAtendidos);
@@ -107,17 +112,17 @@ int main(void) {
         }
       break;
 
-      case 3:
+      case 3: // chamar próximo
         system("clear");
         if (fila > 0) {
-          fila -= 1;
+          removerDaFila(&fila);
           printf("Próximo cliente chamado.\n");
         } else {
           printf("A fila está vazia! Adicione um carro antes de chamar o próximo.");
         }
       break;
 
-      case 4:
+      case 4: // relatórios
         do {
           printf("------------------------------------------------------------------\n");
           printf("1 - Quantidade de litros vendidos (por tipo de combustível)\n");
@@ -132,14 +137,15 @@ int main(void) {
           switch (opcaoRelatorio) {
             case 1:
               system("clear");
-              printf("Litros vendidos:\nEtanol: %.2f\nGasolina Comum: %.2f\nGasolina Aditivada: %.2f\n", qtdEtanol, qtdGasolina, qtdAditivada);
+              printf("Litros vendidos:\nEtanol: %.2f\nGasolina Comum: %.2f\nGasolina Aditivada: %.2f\n",
+                     totalEtanolVendido, totalGasolinaVendida, totalAditivadaVendida);
               break;
 
             case 2:
               system("clear");
-              valorTotal = calcularValorVenda(precoEtanol, qtdEtanol) +
-                           calcularValorVenda(precoGasolina, qtdGasolina) +
-                           calcularValorVenda(precoAditivada, qtdAditivada);
+              valorTotal = calcularValorVenda(precoEtanol, totalEtanolVendido) +
+                           calcularValorVenda(precoGasolina, totalGasolinaVendida) +
+                           calcularValorVenda(precoAditivada, totalAditivadaVendida);
               printf("Valor total arrecadado: R$ %.2f\n", valorTotal);
               break;
 
@@ -151,7 +157,7 @@ int main(void) {
             case 4:
               system("clear");
               printf("Estoque restante:\nEtanol: %.2f L\nGasolina Comum: %.2f L\nGasolina Aditivada: %.2f L\n",
-                      estoqueEtanol, estoqueGasolina, estoqueAditivada);
+                     estoqueEtanol, estoqueGasolina, estoqueAditivada);
               break;
 
             default:
@@ -160,7 +166,7 @@ int main(void) {
         } while (opcaoRelatorio != 5);
       break;
 
-      case 5:
+      case 5: // encerrar
         system("clear");
         printf("\nPrograma encerrado.\n");
       break;
